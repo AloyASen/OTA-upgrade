@@ -1,0 +1,35 @@
+//require SPI flash storage driver 
+
+#require "SPIFlash.class.nut:1.0.1"
+
+//setup global variables
+uart0 <- hardware.uart0;
+uart2 <- hardware.uart2;
+//nor type Quad spi flash
+qspi <- null
+// function to get data from uart 0 
+function getfromUART0(){
+    local state =null;
+}
+//function to store it in spi flash
+function getfromUART0(){
+    local state =null;
+}
+
+//send it through uart 2
+function getfromUART2(){
+    local state = null;
+    server.log("send output");
+    uart2.write("123");
+    server.log("before sleep");
+    imp.wakeup(1.0,getfromUART2);
+    server.log("After wakeup");
+}
+//--------------------------------------------------
+
+// configure uart0 and uaart2
+
+//uart0.configure(115200, 8, PARITY_NONE, 1, NO_CTSRTS);
+server.log("configuring uart 2 to send data")
+uart2.configure(9600, 8, PARITY_NONE, 1, NO_CTSRTS);
+getfromUART2();

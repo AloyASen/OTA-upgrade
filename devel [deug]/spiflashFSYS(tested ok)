@@ -1,0 +1,56 @@
+//require SPI flash storage driver 
+#require "SPIFlashFileSystem.class.nut:1.2.0"
+
+
+//setup global variables
+uart0 <- hardware.uart0;
+uart2 <- hardware.uart2;
+//nor type Quad spi flash
+qspi <- null
+// function to get data from uart 0 
+function getfromUART0(){
+    local state =null;
+}
+//function to store it in spi flash
+function getfromUART0(){
+    local state =null;
+}
+
+//send it through uart 2
+function getfromUART2(){
+    local state = null;
+    server.log("send output");
+    uart2.write("123");
+    server.log("before sleep");
+    imp.wakeup(1.0,getfromUART2);
+    server.log("After wakeup");
+}
+//--------------------------------------------------
+//configure spiflash to store a data into flash
+
+server.log("enabling Spi flash of 2 MB size");
+// Allocate the first 2MB to the file system
+sffs <- SPIFlashFileSystem(0x000000, 0x200000);
+server.log("loading memories");
+sffs.init(function(files) {
+    // Log how many files we found
+    server.log(format("Found %d files", files.len()));
+
+    // Log all the information returned about each file:
+    foreach(file in files) {
+        server.log(format("  %d: %s (%d bytes)", file.id, file.fname, file.size));
+    }
+});
+server.log(sffs.getFreeSpace());
+server.log("creating a new file  hellowold.txt"); 
+// Create a file called HelloWorld.txt
+local file = sffs.open("HelloWorld.txt", "w");
+file.write("hello!");
+file.close();
+server.log("created the new file  hellowold.txt");
+
+// Open HelloWorld.txt and log the contents:
+file = sffs.open("HelloWorld.txt", "r");
+local data = file.read();
+server.log(data);
+file.close();

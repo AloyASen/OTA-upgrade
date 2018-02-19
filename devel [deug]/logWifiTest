@@ -1,0 +1,122 @@
+local ssid = "NETGEAR 2";
+local password = "12345678";
+
+//for connecting to the internet
+
+
+
+//for uart logging in offline
+class Logger {
+    
+    _uart = null;
+    _debug = null;
+
+    // Pass the UART object, eg. hardware.uart6E, Baud rate, and Offline Enable True/False
+    // UART is enabled by default
+
+    constructor(uart = null, baud = 115200, enable = true) {
+        if (uart == null) {
+            server.error("Logger requires a valid imp UART object");
+            return null;
+        }
+        
+        _uart = uart;
+        _uart.configure(baud, 8, PARITY_NONE, 1, NO_RX | NO_CTSRTS);
+        _debug = enable;
+    }
+
+    function enable() {
+        _debug = true;
+    }
+
+    function disable() {
+        _debug = false;
+    }
+
+    function log(message) {
+        if (_debug) _uart.write("[LOG] " + message + "\n");
+        _uart.flush();
+        server.log(message);
+    }
+    
+    function error(message) {
+        if (_debug) _uart.write("[ERR] " + message + "\n");
+        server.error(message);
+    }
+}
+
+// usrt get local ip messages through uart
+
+globalDebug <- Logger(hardware.uart2, 115200);
+// ------ logging netdata
+function logData(){
+    globalDebug.log("Device tryig to connect to wifi ");
+    
+    changeWiFi();
+    
+    
+    local netData = imp.net.info();
+if ("active" in netData) {
+    // We have an active network connection
+    local ip = netData.ipv4.address;
+    local type = netData.interface[netData.active].type;
+    globalDebug.log("The imp has IP address " + ip + " and is connected via " + type);
+    
+    // these ini=fo is not showing on not being connected 
+    
+    //local type = netData.interface[netData.active].connectedssid;
+    //globalDebug.log("The imp has IP address " + ip + " and is connected via " + type);
+    if (netData.interface.len() > 1) {
+        // The imp has more than one possible network interface
+        // so note the second, disconnected one
+        local altType = "";
+        if (netData.active == 0) {
+            altType = netData.interface[1].type;
+        } else {
+            altType = netData.interface[0].type;
+        }
+        
+        globalDebug.log("(It can also connect via " + altType + ")");
+    }
+} else {
+    globalDebug.log("The imp is not connected");
+}
+     imp.wakeup(20,logData);
+
+}
+
+
+
+function connected(reason) {
+   
+    if (reason ==SERVER_CONNECTED) {
+        globalDebug.log("Device now connected to " + imp.getssid());
+    } 
+}
+
+function changeWiFi() {
+    // log looping 
+    globalDebug.log("checking Device connection from internet ");
+    
+    //globalDebug.log("Device disconnecting from " + imp.getssid());
+    
+     // Wait for the WiFi buffer to empty before disconnecting
+    server.flush(60.0);
+    server.disconnect();
+    
+    // Change the WiFI configuration with the passed parameters
+    imp.setwificonfiguration(ssid, password);
+    
+    // Attempt to reconnect asynchronously
+    server.connect(connected,4);
+        
+   
+}
+
+
+
+
+// Change to backup network
+logData();
+
+

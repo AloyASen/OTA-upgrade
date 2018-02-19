@@ -1,0 +1,60 @@
+// electric imp OTA process
+// ==========================================
+//code for Agent 
+// ------------------------------
+
+// Set up outgoing request object
+local request = http.get("https://www.dropbox.com/s/6h6x4bzx7qob4f3/text%20from%20dropbox?dl=0");
+ 
+// Define the response handler
+function handleResponse(responseTable) {
+    // Called when the imp receives a response from the remote service
+    if (responseTable.statuscode == 200) {
+        // Remote service has responded with 'OK' so decode
+        // the response's body 'responseTable.body' and headers 'responseTable.headers'
+        // Code omitted for clarity... 
+        device.send("set.reponse", responseTable.body);
+    } else {
+        // Log an error
+        server.log("Error response: " + responseTable.statuscode);
+    }
+}
+ 
+// Send the request asynchronously. This will not block the imp CPU
+request.sendasync(handleResponse);
+
+//================================================
+// code for device 
+//----------------------------------------------
+
+
+
+// -------------------------------------
+
+//setup global variables
+uart2 <- hardware.uart2;
+
+//wait loop
+function waitLoop(){
+    server.log("the device is waiting for external changes ");
+}
+//send it through uart 2
+function sendToUART2(ContentData){
+    local state = null;
+    server.log("send output");
+    uart2.write(ContentData);
+    server.log("before sleep");
+}
+//--------------------------------------------------
+
+// configure uart0 and uaart2
+
+//uart0.configure(115200, 8, PARITY_NONE, 1, NO_CTSRTS);
+server.log("configuring uart 2 to send data")
+uart2.configure(9600, 8, PARITY_NONE, 1, NO_CTSRTS);
+
+
+//-----------------------------------
+
+server.log("the device is waiting for Agent to respond");
+agent.on("set.reponse", sendToUART2);
